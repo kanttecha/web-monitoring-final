@@ -27,7 +27,7 @@
             <use xlink:href="#exclamation-triangle-fill"/>
           </svg>
           <div class="alert-message">
-            {{ alert.placeOfWork }} Temperature is greater than or equal to 40.
+            {{ alert.placeOfWork }} Temperature is greater than or equal to 40 .
           </div>
         </div>
       </div>
