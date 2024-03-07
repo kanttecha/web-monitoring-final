@@ -1,0 +1,1 @@
+stop ffmpeg2.bat

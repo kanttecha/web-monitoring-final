@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
+    <script defer src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+    
+    <title>Document</title>
+</head>
+<body>
+
+    <div>
+        <video 
+            id="my-video"
+            class="video-js"
+            controls
+            preload="auto"
+            width="540"
+            height="480"
+            data-setup='{}'
+            controls>
+            <source src="output1.m3u8">
+        </video>
+
+    </div>
+
+    <div>
+            <!-- Add a button to capture the video -->
+        <button id="captureButton">Capture Video</button>
+
+        <!-- Add a button to start/stop recording -->
+        <button id="recordButton">Start Recording</button>
+
+        <!-- Add a button to run the .bat file -->
+        <button id="runBatButton">Run .bat File</button>
+        <!-- Add a button to stop the batch file -->
+        <button id="stopBatchButton">Stop Batch File</button>
+
+    </div>
+    
+
+
+    
+    
+    <script>
+        let mediaRecorder;
+        const recordedChunks = [];
+
+        // Function to start recording
+        function startRecording() {
+            const player = videojs('my-video');
+            const stream = player.el().getElementsByTagName('video')[0].captureStream();
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+
+                // Create a link element
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = 'recorded_video.webm';
+
+                // Append the link to the document and programmatically click it
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+
+                // Remove the link from the document
+                document.body.removeChild(downloadLink);
+            };
+
+            mediaRecorder.start();
+            document.getElementById('recordButton').textContent = 'Stop Recording';
+        }
+
+        // Function to stop recording
+        function stopRecording() {
+            mediaRecorder.stop();
+            document.getElementById('recordButton').textContent = 'Start Recording';
+        }
+
+        // Attach the function to the button click event for starting/stopping recording
+        document.getElementById('recordButton').addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        // Function to capture the video
+        function captureVideo() {
+            const player = videojs('my-video');
+            const canvas = document.createElement('canvas');
+            const videoEl = player.el().getElementsByTagName('video')[0];
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+            // Convert the captured frame to a data URL
+            const capturedDataURL = canvas.toDataURL('image/png');
+
+            // Create a link element
+            const downloadLink = document.createElement('a');
+            downloadLink.href = capturedDataURL;
+            downloadLink.download = 'captured_image.png';
+
+            // Append the link to the document and programmatically click it
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+
+            // Remove the link from the document
+            document.body.removeChild(downloadLink);
+        }
+
+        // Attach the function to the button click event for capturing video
+        document.getElementById('captureButton').addEventListener('click', captureVideo);
+
+        // Function to run the .bat file
+        function runBatFile() {
+            // Use fetch API to make a request to a server-side script that runs the .bat file
+            fetch('run_bat_script.php') // Replace with the path to your server-side script
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => console.log(data))
+                .catch(error => console.error('There was a problem with the fetch operation:', error));
+        }
+
+        // Attach the function to the button click event
+        document.getElementById('runBatButton').addEventListener('click', runBatFile);
+
+        function stopBatchFile() {
+            // Use fetch API to make a request to the PHP script that creates the control mechanism
+            fetch('stop_batch_file.php') // Replace with the path to your PHP script
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(data => console.log(data))
+                .catch(error => console.error('There was a problem with the fetch operation:', error));
+        }
+
+        // Attach the function to the button click event
+        document.getElementById('stopBatchButton').addEventListener('click', stopBatchFile);
+
+    </script>
+</body>
+</html>
