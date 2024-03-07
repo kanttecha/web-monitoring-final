@@ -18,7 +18,8 @@
       </div>
     </nav>
 
-    <!-- Mini window alerts -->
+
+    <!-- Mini window alerts temp -->
     <div class="mini-window-container">
       <div v-for="(alert, index) in alerts" :key="index" class="mini-window">
         <div class="alert alert-danger d-flex align-items-center" role="alert">
