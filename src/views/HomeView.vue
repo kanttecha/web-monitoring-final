@@ -1,9 +1,15 @@
 <template>
-
   <div class="table-container">
-    <!--<div class="google_map1">
-      <MapView />
-    </div> -->
+    <div class="google-map-container">
+      <div class="google_map1">
+        <MapView />
+      </div>
+      <router-link to="/about" class="add-job-button">ADD JOB</router-link>
+    </div>
+
+
+
+
     <table>
       <!-- Table Header -->
       <thead>
@@ -13,9 +19,9 @@
           <th>Job Type</th>
           <th>Job Location</th>
           <th>Serial Number</th>
-          <th v-if="isAuthorizedToViewRtspCamera">RTSP Camera</th> <!-- Conditionally render the column -->
+          <th v-if="isAuthorizedToViewRtspCamera">RTSP Camera</th>
           <th>Responsible Person</th>
-          <th>Action</th> <!-- Edit and Delete buttons columns -->
+          <th>Action</th>
         </tr>
       </thead>
       <!-- Table Body -->
@@ -27,7 +33,7 @@
           <td>{{ item.jobType }}</td>
           <td>{{ item.province }}, {{ item.district }}, {{ item.subDistrict }}, {{ item.postalCode }}</td>
           <td>{{ item.serialNumber }}</td>
-          <td v-if="isAuthorizedToViewRtspCamera"> <!-- Conditionally render the column -->
+          <td v-if="isAuthorizedToViewRtspCamera">
             <ul>
               <li v-for="(camera, cameraIndex) in item.rtspCameras" :key="cameraIndex">
                 {{ camera.value }}
@@ -60,22 +66,23 @@
   </div>
 </template>
 
-
 <script>
 import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { firestore } from "@/firebase";
+import MapView from '@/components/MapView.vue';
 import store from '@/store';
-//import MapView from '@/components/MapView.vue';
+
 export default {
-    /*components: {
+  components: {
     MapView,
-  },*/
+  },
   data() {
     return {
       scorecardData: [],
       currentPage: 1,
       itemsPerPage: 5,
-      searchQuery: "", // To store the search query
+      searchQuery: "",
+      
     };
   },
   computed: {
@@ -98,7 +105,7 @@ export default {
           searchRegex.test(item.longitude) ||
           searchRegex.test(item.serialNumber) ||
           searchRegex.test(item.responsiblePerson) ||
-          (this.isAuthorizedToViewRtspCamera && item.rtspCameras.some(camera => searchRegex.test(camera.value))) // Check if user can view RTSP Camera column
+          (this.isAuthorizedToViewRtspCamera && item.rtspCameras.some(camera => searchRegex.test(camera.value)))
         );
       });
     },
@@ -116,7 +123,7 @@ export default {
     isAuthorizedToViewRtspCamera() {
       const userRole = store.getters.userRole;
       return userRole === 'admin' || userRole === 'web_admin';
-    }
+    },
   },
   mounted() {
     this.fetchScorecardData();
@@ -130,16 +137,19 @@ export default {
           id: doc.id,
           ...doc.data(),
         }));
+        this.checkTemperatureAlert();
       } catch (error) {
         console.error("Error fetching scorecard data:", error);
       }
     },
+
+
+
+
+
     deleteScorecardItem(itemId) {
-      this.deletingItemId = itemId;
       if (confirm("Are you sure you want to delete this item?")) {
         this.performDelete(itemId);
-      } else {
-        this.deletingItemId = null;
       }
     },
     async performDelete(itemId) {
@@ -150,8 +160,6 @@ export default {
         console.log("Document successfully deleted!");
       } catch (error) {
         console.error("Error deleting document:", error);
-      } finally {
-        this.deletingItemId = null;
       }
     },
     editScorecardItem(itemId) {
@@ -168,7 +176,7 @@ export default {
       }
     },
     handleSearch() {
-      this.currentPage = 1; // Reset current page to 1 when searching
+      this.currentPage = 1;
     }
   },
 };
@@ -184,6 +192,7 @@ export default {
 table {
   width: 100%;
   border: 1px solid black;
+  margin-top: 20px;
 }
 
 th, td {
@@ -258,9 +267,32 @@ button.delete {
   border-radius: 5px;
 }
 
-.google_map1{
+.google-map-container {
+  display: flex;
+  align-items: flex-start; /* Align items at the top of the container */
+}
+
+.google_map1 {
   width: 45%;
   padding-top: 20px;
 }
+
+.add-job-button {
+  margin-left: 10%; /* Adjust left margin to separate from the map */
+  padding: 8px 16px;
+  background-color: #00ff517b;
+  color: #000000;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none; /* Remove default link underline */
+  margin-top: 20px;
+}
+
+.add-job-button:hover {
+  background-color: #28df62; /* Darker blue on hover */
+}
+
+
 </style>
 

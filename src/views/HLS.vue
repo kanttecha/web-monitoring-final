@@ -32,6 +32,28 @@
         </div>
       </div>
     </div>
+    <div class="variable-info">
+      <label class="info-label" for="placeOfWork">Job Name:</label>
+      <p v-if="placeOfWork" class="info-value">{{ placeOfWork }}</p>
+
+      <label class="info-label" for="serialNumber">Job Serial Number:</label>
+      <p v-if="serialNumber" class="info-value">{{ serialNumber }}</p>
+
+      <label class="info-label" for="jobType">Job Type:</label>
+      <p v-if="jobType" class="info-value">{{ jobType }}</p>
+
+      <label class="info-label" for="province">Job Province:</label>
+      <p v-if="province" class="info-value">{{ province }}</p>
+
+      <label class="info-label" for="district">Job District:</label>
+      <p v-if="district" class="info-value">{{ district }}</p>
+
+      <label class="info-label" for="subDistrict">Job Sub District:</label>
+      <p v-if="subDistrict" class="info-value">{{ subDistrict }}</p>
+
+      <label class="info-label" for="responsiblePerson">Responsible Person Data:</label>
+      <p v-if="responsiblePerson" class="info-value">{{ responsiblePerson }}</p>
+    </div>
     
   </div>
 </template>
@@ -51,11 +73,19 @@ export default {
       mediaRecorders: [],
       recordedChunks: [],
       serialNumber: null,
+      placeOfWork: null,
+      province: null,
+      district: null,
+      subDistrict: null,
+      responsiblePerson: null,
+      jobType: null,
     };
   },
   async mounted() {
     // Extract serial number from the route params
     this.serialNumber = this.$route.params.serialNumber;
+    // Load variable information associated with the serial number
+    await this.loadVariableInfo();
     // Load videos associated with the serial number
     await this.loadVideos();
     // Initialize video players
@@ -284,6 +314,29 @@ export default {
       await this.generateBatFiles_mainstream();
       await this.runAllBatFiles();
     },
+        async loadVariableInfo() {
+      try {
+        const scorecardCollection = collection(firestore, "your_collection");
+        const querySnapshot = await getDocs(scorecardCollection);
+
+        querySnapshot.forEach((doc) => {
+          const scorecardData = doc.data();
+          // Check if the serial number matches
+          if (scorecardData.serialNumber === this.serialNumber) {
+            // Assign variable information
+            this.placeOfWork = scorecardData.placeOfWork;
+            this.province = scorecardData.province;
+            this.district = scorecardData.district;
+            this.subDistrict = scorecardData.subDistrict;
+            this.responsiblePerson = scorecardData.responsiblePerson;
+            this.jobType = scorecardData.jobType;
+          }
+        });
+      } catch (error) {
+        alert("Error loading variable information: " + error.message);
+        console.error("Error loading variable information:", error);
+      }
+    },
   },
   beforeUnmount() {
     // Clean up resources here if needed
@@ -310,5 +363,37 @@ export default {
   margin-right: 10px;
   border-radius: 5px;
   padding: 5px 10px;
+}
+
+.variable-info {
+  margin-top: 20px;
+  padding-left: 20px;
+  text-align: left;
+}
+
+
+
+.info-label {
+  font-weight: bold;
+  text-align: left;
+  font-size: 16px; /* Increase font size */
+  width: 200px; /* Increase width for labels */
+  padding-top: 10px;
+  
+}
+
+
+
+.info-value {
+  width: 20%;
+  padding: 10px; /* Increase padding for better appearance */
+  border: 1px solid #ccc; /* Add a border */
+  border-radius: 5px; /* Add rounded corners */
+  transition: border-color 0.3s ease; /* Smooth transition for border color */
+  margin: 0;
+  
+  font-size: 16px; /* Increase font size */
+  text-align: left;
+
 }
 </style>
