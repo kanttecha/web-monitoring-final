@@ -31,24 +31,34 @@ app.post('/generateBatFiles', async (req, res) => {
 
       rtspCameras.forEach((rtspCamera, cameraIndex) => {
         const outputFile = `${serialNumber}_${cameraIndex + 1}`; // Output file name without extension
-        let ffmpegCommand = '';
+        let mainFfmpegCommand = '';
+        let subFfmpegCommand = '';
 
-        // Check if it's a main stream (subtype=0) or a sub stream (subtype=1)
-        if (rtspCamera.value.endsWith('subtype=0')) {
-          // Main stream configuration
-          ffmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${rtspCamera.value}" -vf scale=2560:1440 -vcodec libx264 -r 25 -b:v 2000000 -crf 23 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}.m3u8"`;
-        } else if (rtspCamera.value.endsWith('subtype=1')) {
-          // Sub stream configuration
-          ffmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${rtspCamera.value}" -vf scale=704:576 -vcodec libx264 -r 25 -b:v 500000 -crf 25 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}.m3u8"`;
-        } else {
-          console.error('Invalid subtype in RTSP camera value:', rtspCamera.value);
-          return; // Skip processing if subtype is neither 0 nor 1
+        // Adjust rtspCamera value for main stream if necessary
+        let mainRtspCameraValue = rtspCamera.value;
+        if (!rtspCamera.value.endsWith('subtype=0')) {
+          mainRtspCameraValue = rtspCamera.value.replace(/subtype=\d/g, '') + 'subtype=0';
         }
+        // Main stream configuration
+        mainFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${mainRtspCameraValue}" -vf scale=2560:1440 -vcodec libx264 -r 25 -b:v 2000000 -crf 23 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}_main.m3u8"`;
 
-        // Write the command to a .bat file
-        const batFilePath = path.join(__dirname, 'hls', outputFile + '.bat');
-        fs.writeFileSync(batFilePath, ffmpegCommand);
-        fs.chmodSync(batFilePath, '755'); // Ensure .bat file has execute permission
+        // Adjust rtspCamera value for sub stream if necessary
+        let subRtspCameraValue = rtspCamera.value;
+        if (!rtspCamera.value.endsWith('subtype=1')) {
+          subRtspCameraValue = rtspCamera.value.replace(/subtype=\d/g, '') + 'subtype=1';
+        }
+        // Sub stream configuration
+        subFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${subRtspCameraValue}" -vf scale=704:576 -vcodec libx264 -r 25 -b:v 500000 -crf 25 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}_sub.m3u8"`;
+
+        // Write the main stream command to a .bat file
+        const mainBatFilePath = path.join(__dirname, 'hls', outputFile + '_main.bat');
+        fs.writeFileSync(mainBatFilePath, mainFfmpegCommand);
+        fs.chmodSync(mainBatFilePath, '755'); // Ensure .bat file has execute permission
+
+        // Write the sub stream command to a .bat file
+        const subBatFilePath = path.join(__dirname, 'hls', outputFile + '_sub.bat');
+        fs.writeFileSync(subBatFilePath, subFfmpegCommand);
+        fs.chmodSync(subBatFilePath, '755'); // Ensure .bat file has execute permission
       });
     });
 
@@ -58,6 +68,8 @@ app.post('/generateBatFiles', async (req, res) => {
     res.status(500).send('An error occurred during generation of .bat files.');
   }
 });
+
+
 
 
 // Define a route for deleting .bat, .ts, and .m3u8 files

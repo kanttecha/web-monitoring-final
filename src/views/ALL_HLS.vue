@@ -5,7 +5,6 @@
       <button @click="performMainStreamOperation" class="button">Main Stream</button>
       <button @click="performSubStreamOperation" class="button">Sub Stream</button>
       <button @click="deleteFiles" class="button" style="background-color: #dc3545; color: white;">Delete Files</button>
-
     </div>
 
     <!-- Loop through the videos and render each one -->
@@ -49,11 +48,17 @@ export default {
       recording: [],
       mediaRecorders: [], // Array to store MediaRecorder instances for each video
       recordedChunks: [], // Array to store recorded chunks for each video
+      currentStream: 'sub' // Initially set to sub stream
     };
   },
   async mounted() {
     await this.loadVideos();
     this.initPlayers();
+  },
+  watch: {
+    currentStream() {
+      this.updateVideoSource();
+    }
   },
   methods: {
     async loadVideos() {
@@ -81,7 +86,7 @@ export default {
       this.videos.forEach((videoId, index) => {
         const player = videojs(`video-${index}`, {}, () => {});
         player.src({
-          src: `http://192.168.1.20:3000/hls/${videoId}.m3u8`,
+          src: `http://192.168.1.20:3000/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
       });
@@ -132,7 +137,6 @@ export default {
         console.error("Error recording:", error);
       }
     },
-
 
     capture(index) {
       try {
@@ -270,16 +274,28 @@ export default {
       }
     },
     async performSubStreamOperation() {
+      this.currentStream = 'sub'; // Update the current stream to sub
       await this.generateBatFiles();
       await this.runAllBatFiles();
+      this.updateVideoSource();
     },
     async performMainStreamOperation() {
+      this.currentStream = 'main'; // Update the current stream to main
       await this.generateBatFiles_mainstream();
       await this.runAllBatFiles();
+      this.updateVideoSource();
     },
-  },
-  beforeUnmount() {
-    // Clean up resources here if needed
+    updateVideoSource() {
+      this.videos.forEach((videoId, index) => {
+        const player = videojs(`video-${index}`);
+        player.src({
+          src: `http://192.168.1.20:3000/hls/${videoId}_${this.currentStream}.m3u8`,
+          type: 'application/x-mpegURL'
+        });
+        player.load(); // Load the new source
+        player.play(); // Start playing the video automatically after loading the new source
+      });
+    },
   },
 };
 </script>
