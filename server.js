@@ -21,6 +21,11 @@ app.use(express.json());
 // Serve HLS files from the 'hls' directory
 app.use('/hls', express.static(path.join(__dirname, 'hls')));
 
+
+
+
+
+
 // Define a route for generating .bat files
 app.post('/generateBatFiles', async (req, res) => {
   try {
@@ -28,27 +33,20 @@ app.post('/generateBatFiles', async (req, res) => {
 
     data.forEach((item) => {
       const { serialNumber, rtspCameras } = item;
-
+      console.log("rtspvalue= xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",rtspCameras)
       rtspCameras.forEach((rtspCamera, cameraIndex) => {
         const outputFile = `${serialNumber}_${cameraIndex + 1}`; // Output file name without extension
         let mainFfmpegCommand = '';
         let subFfmpegCommand = '';
 
-        // Adjust rtspCamera value for main stream if necessary
-        let mainRtspCameraValue = rtspCamera.value;
-        if (!rtspCamera.value.endsWith('subtype=0')) {
-          mainRtspCameraValue = rtspCamera.value.replace(/subtype=\d/g, '') + 'subtype=0';
-        }
-        // Main stream configuration
-        mainFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${mainRtspCameraValue}" -vf scale=2560:1440 -vcodec libx264 -r 25 -b:v 2000000 -crf 23 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}_main.m3u8"`;
+        // Remove only the last character from rtspCamera.value
+        let mainRtspCameraValue = rtspCamera.value.slice(0, -1);
 
-        // Adjust rtspCamera value for sub stream if necessary
-        let subRtspCameraValue = rtspCamera.value;
-        if (!rtspCamera.value.endsWith('subtype=1')) {
-          subRtspCameraValue = rtspCamera.value.replace(/subtype=\d/g, '') + 'subtype=1';
-        }
+        // Main stream configuration
+        mainFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${mainRtspCameraValue}0" -vf scale=2560:1440 -vcodec libx264 -r 25 -b:v 2000000 -crf 23 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}_main.m3u8"`;
+
         // Sub stream configuration
-        subFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${subRtspCameraValue}" -vf scale=704:576 -vcodec libx264 -r 25 -b:v 500000 -crf 25 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}_sub.m3u8"`;
+        subFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${mainRtspCameraValue}1" -vf scale=704:576 -vcodec libx264 -r 25 -b:v 500000 -crf 25 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}_sub.m3u8"`;
 
         // Write the main stream command to a .bat file
         const mainBatFilePath = path.join(__dirname, 'hls', outputFile + '_main.bat');
@@ -68,6 +66,12 @@ app.post('/generateBatFiles', async (req, res) => {
     res.status(500).send('An error occurred during generation of .bat files.');
   }
 });
+
+
+
+
+
+
 
 
 

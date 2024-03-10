@@ -79,6 +79,7 @@ export default {
       subDistrict: null,
       responsiblePerson: null,
       jobType: null,
+      currentStream: 'sub',
     };
   },
   async mounted() {
@@ -90,6 +91,11 @@ export default {
     await this.loadVideos();
     // Initialize video players
     this.initPlayers();
+  },
+  watch: {
+    currentStream() {
+      this.updateVideoSource();
+    }
   },
   computed: {
     // Filter videos based on the current serial number
@@ -124,7 +130,7 @@ export default {
       this.filteredVideos.forEach((videoId, index) => {
         const player = videojs(`video-${index}`, {}, () => {});
         player.src({
-          src: `http://192.168.1.20:3000/hls/${videoId}.m3u8`,
+          src: `http://192.168.1.20:3000/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
       });
@@ -209,66 +215,20 @@ export default {
 
           // Adjust rtspCamera values if necessary
           const adjustedRtspCameras = rtspCameras.map(rtspCamera => {
-            // Check if the rtspCamera value contains "&subtype=0"
-            if (rtspCamera.value.includes("&subtype=0")) {
-              // If "&subtype=0" is present, replace it with "&subtype=1"
-              rtspCamera.value = rtspCamera.value.replace("&subtype=0", "&subtype=1");
-            } else {
-              // If "&subtype=0" is not present, add "&subtype=1" to the end
-              rtspCamera.value += "&subtype=1";
+            // Check if the rtspCamera value ends with "&subtype=1" or "&subtype=0"
+            if (!rtspCamera.value.endsWith("&subtype=1") && !rtspCamera.value.endsWith("&subtype=0")) {
+              // If it doesn't end with "&subtype=1" or "&subtype=0", remove anything after 'channel=1' and add "&subtype=1" to the end
+              const channelIndex = rtspCamera.value.indexOf("channel=1");
+              if (channelIndex !== -1) {
+                rtspCamera.value = rtspCamera.value.substring(0, channelIndex + 9) + "&subtype=1";
+              }
             }
             return rtspCamera;
           });
 
           // Add adjusted data to the array
           data.push({ serialNumber, rtspCameras: adjustedRtspCameras });
-        });
-
-        // Make a POST request to the server to trigger the generation of .bat files
-        const response = await axios.post('http://192.168.1.20:3000/generateBatFiles', { data });
-
-        if (response.status === 200) {
-          console.log("Bat files generated successfully.");
-        } else {
-          alert("Failed to generate .bat files.");
-          console.error("Failed to generate .bat files.");
-        }
-      } catch (error) {
-        alert("Error generating .bat files: " + error.message);
-        console.error("Error generating .bat files:", error);
-      }
-    },
-    async generateBatFiles_mainstream() {
-      try {
-        console.log("Generating .bat files...");
-
-        const scorecardCollection = collection(firestore, "your_collection");
-        const querySnapshot = await getDocs(scorecardCollection);
-
-        const data = [];
-
-        querySnapshot.forEach((doc) => {
-          const scorecardData = doc.data();
-          console.log("Fetched scorecard data:", scorecardData);
-
-          // Get the serialNumber and rtspCameras from the current scorecard data
-          const { serialNumber, rtspCameras } = scorecardData;
-
-          // Adjust rtspCamera values if necessary
-          const adjustedRtspCameras = rtspCameras.map(rtspCamera => {
-            // Check if the rtspCamera value contains "&subtype=1"
-            if (rtspCamera.value.includes("&subtype=1")) {
-              // If "&subtype=1" is present, replace it with "&subtype=0"
-              rtspCamera.value = rtspCamera.value.replace("&subtype=1", "&subtype=0");
-            } else {
-              // If "&subtype=1" is not present, add "&subtype=0" to the end
-              rtspCamera.value += "&subtype=0";
-            }
-            return rtspCamera;
-          });
-
-          // Add adjusted data to the array
-          data.push({ serialNumber, rtspCameras: adjustedRtspCameras });
+          console.log("rtsppppppppppppp  ",rtspCameras)
         });
 
         // Make a POST request to the server to trigger the generation of .bat files
@@ -307,14 +267,29 @@ export default {
       }
     },
     async performSubStreamOperation() {
+      this.currentStream = 'sub'; // Update the current stream to sub
       await this.generateBatFiles();
       await this.runAllBatFiles();
+      this.updateVideoSource();
     },
     async performMainStreamOperation() {
-      await this.generateBatFiles_mainstream();
+      this.currentStream = 'main'; // Update the current stream to main
+      await this.generateBatFiles();
       await this.runAllBatFiles();
+      this.updateVideoSource();
     },
-        async loadVariableInfo() {
+    updateVideoSource() {
+      this.filteredVideos.forEach((videoId, index) => {
+        const player = videojs(`video-${index}`);
+        player.src({
+          src: `http://192.168.1.20:3000/hls/${videoId}_${this.currentStream}.m3u8`,
+          type: 'application/x-mpegURL'
+        });
+        player.load(); // Load the new source
+        player.play(); // Start playing the video automatically after loading the new source
+      });
+    },
+    async loadVariableInfo() {
       try {
         const scorecardCollection = collection(firestore, "your_collection");
         const querySnapshot = await getDocs(scorecardCollection);
