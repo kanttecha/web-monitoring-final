@@ -15,7 +15,7 @@ admin.initializeApp({
 });
 
 // Middleware
-app.use(cors({ origin: 'http://192.168.1.20:8080' }));
+app.use(cors({ origin: 'http://localhost:8080' }));
 app.use(express.json());
 
 // Serve HLS files from the 'hls' directory

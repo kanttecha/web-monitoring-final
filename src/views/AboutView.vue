@@ -134,7 +134,7 @@ export default {
         return;
       }
 
-      this.generatedURL = `http://192.168.1.20:8080/hls/${this.newScorecard.serialNumber}`;
+      this.generatedURL = `http://localhost:8080/hls/${this.newScorecard.serialNumber}`;
       this.newScorecard.url = this.generatedURL;
 
       try {

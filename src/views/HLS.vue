@@ -130,7 +130,7 @@ export default {
       this.filteredVideos.forEach((videoId, index) => {
         const player = videojs(`video-${index}`, {}, () => {});
         player.src({
-          src: `http://192.168.1.20:3000/hls/${videoId}_${this.currentStream}.m3u8`,
+          src: `http://localhost:3000/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
       });
@@ -232,7 +232,7 @@ export default {
         });
 
         // Make a POST request to the server to trigger the generation of .bat files
-        const response = await axios.post('http://192.168.1.20:3000/generateBatFiles', { data });
+        const response = await axios.post('http://localhost:3000/generateBatFiles', { data });
 
         if (response.status === 200) {
           console.log("Bat files generated successfully.");
@@ -248,7 +248,7 @@ export default {
     async deleteFiles() {
       try {
         console.log("Deleting files...");
-        await axios.delete('http://192.168.1.20:3000/deleteFiles');
+        await axios.delete('http://localhost:3000/deleteFiles');
         console.log("Files deleted successfully.");
       } catch (error) {
         alert("Error deleting files: " + error.message);
@@ -257,7 +257,7 @@ export default {
     },
     async runAllBatFiles() {
       try {
-        const response = await axios.get('http://192.168.1.20:3000/runAllBatFiles');
+        const response = await axios.get('http://localhost:3000/runAllBatFiles');
         console.log(response.data); // Log the response from the server
         // Optionally, you can show a success message or perform other actions after running all .bat files
       } catch (error) {
@@ -282,7 +282,7 @@ export default {
       this.filteredVideos.forEach((videoId, index) => {
         const player = videojs(`video-${index}`);
         player.src({
-          src: `http://192.168.1.20:3000/hls/${videoId}_${this.currentStream}.m3u8`,
+          src: `http://localhost:3000/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
         player.load(); // Load the new source

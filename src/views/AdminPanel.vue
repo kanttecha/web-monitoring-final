@@ -106,7 +106,7 @@ export default {
       if (confirm(`Are you sure you want to permanently delete this user's account? This action cannot be undone.`)) {
         try {
           // Send DELETE request to server to delete user
-          const response = await fetch(`http://192.168.1.20:3000/deleteUsers/${userId}`, {
+          const response = await fetch(`http://localhost:3000/deleteUsers/${userId}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
