@@ -7,15 +7,19 @@ const admin = require('firebase-admin');
 const serviceAccount = require('./src/firebase/serviceAccountKey.json'); // Adjust the path
 
 const app = express();
-const PORT = 3000;
 
+const config = require('./src/config_ip_port_server.js');
+
+const ip = config.ipv4;
+const PORT = config.port;
+const port_web = config.port_web
 // Firebase Admin initialization
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:8080' }));
+app.use(cors({ origin: `http://${ip}:${port_web}` }));
 app.use(express.json());
 
 // Serve HLS files from the 'hls' directory

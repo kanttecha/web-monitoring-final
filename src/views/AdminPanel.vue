@@ -49,14 +49,15 @@ import { firestore } from '@/firebase'; // Assuming your Firebase configuration 
 import { collection, getDocs } from 'firebase/firestore';
 import { deleteDoc } from 'firebase/firestore';
 import { getAuth } from "firebase/auth";
-
+import config from '@/config_ip_port_server.js';
 export default {
   setup() {
     const users = ref([]);
     const pageSize = ref(10);
     const currentPage = ref(1);
     const searchQuery = ref('');
-
+    const ipv4 = ref(config.ipv4);
+    const port = ref(config.port);
     const fetchUsers = async () => {
       try {
         const usersCollectionRef = collection(firestore, 'users');
@@ -106,7 +107,7 @@ export default {
       if (confirm(`Are you sure you want to permanently delete this user's account? This action cannot be undone.`)) {
         try {
           // Send DELETE request to server to delete user
-          const response = await fetch(`http://localhost:3000/deleteUsers/${userId}`, {
+          const response = await fetch(`http://${ipv4.value}:${port.value}/deleteUsers/${userId}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -176,6 +177,8 @@ export default {
       prevPage,
       searchQuery,
       handleSearch,
+      ipv4,
+      port,
     };
   },
 };

@@ -40,7 +40,7 @@ import 'video.js/dist/video-js.css';
 import { collection, getDocs } from "firebase/firestore";
 import { firestore } from "@/firebase";
 import axios from 'axios';
-
+import config from '@/config_ip_port_server.js';
 export default {
   data() {
     return {
@@ -48,7 +48,9 @@ export default {
       recording: [],
       mediaRecorders: [], // Array to store MediaRecorder instances for each video
       recordedChunks: [], // Array to store recorded chunks for each video
-      currentStream: 'sub' // Initially set to sub stream
+      currentStream: 'sub', // Initially set to sub stream
+      ipv4: config.ipv4,
+      port: config.port,
     };
   },
   async mounted() {
@@ -86,7 +88,7 @@ export default {
       this.videos.forEach((videoId, index) => {
         const player = videojs(`video-${index}`, {}, () => {});
         player.src({
-          src: `http://localhost:3000/hls/${videoId}_${this.currentStream}.m3u8`,
+          src: `http://${this.ipv4}:${this.port}/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
       });
@@ -192,7 +194,7 @@ export default {
         });
 
         // Make a POST request to the server to trigger the generation of .bat files
-        const response = await axios.post('http://localhost:3000/generateBatFiles', { data });
+        const response = await axios.post(`http://${this.ipv4}:${this.port}/generateBatFiles`, { data });
 
         if (response.status === 200) {
           console.log("Bat files generated successfully.");
@@ -211,7 +213,7 @@ export default {
     async deleteFiles() {
       try {
         console.log("Deleting files...");
-        await axios.delete('http://localhost:3000/deleteFiles');
+        await axios.delete(`http://${this.ipv4}:${this.port}/deleteFiles`);
         console.log("Files deleted successfully.");
       } catch (error) {
         alert("Error deleting files: " + error.message);
@@ -220,7 +222,7 @@ export default {
     },
     async runAllBatFiles() {
       try {
-        const response = await axios.get('http://localhost:3000/runAllBatFiles');
+        const response = await axios.get(`http://${this.ipv4}:${this.port}/runAllBatFiles`);
         console.log(response.data); // Log the response from the server
         // Optionally, you can show a success message or perform other actions after running all .bat files
       } catch (error) {
@@ -245,7 +247,7 @@ export default {
       this.videos.forEach((videoId, index) => {
         const player = videojs(`video-${index}`);
         player.src({
-          src: `http://localhost:3000/hls/${videoId}_${this.currentStream}.m3u8`,
+          src: `http://${this.ipv4}:${this.port}/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
         player.load(); // Load the new source

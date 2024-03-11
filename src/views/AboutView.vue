@@ -91,10 +91,13 @@
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { firestore } from "@/firebase";
 import data from "./th-address.json";
-
+import config from '@/config_ip_port_server.js';
 export default {
   data() {
     return {
+      ipv4: config.ipv4,
+      port_web: config.port_web,
+      
       newScorecard: {
         placeOfWork: "",
         latitude: "",
@@ -134,7 +137,7 @@ export default {
         return;
       }
 
-      this.generatedURL = `http://localhost:8080/hls/${this.newScorecard.serialNumber}`;
+      this.generatedURL = `http://${this.ipv4}:${this.port_web}/hls/${this.newScorecard.serialNumber}`;
       this.newScorecard.url = this.generatedURL;
 
       try {
