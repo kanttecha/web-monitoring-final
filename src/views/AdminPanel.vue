@@ -1,34 +1,5 @@
 <template>
   <div class="admin-panel">
-    <table>
-      <thead>
-        <tr>
-          <th>Username</th>
-          <th>Email</th>
-          <th>Name-Surname</th>
-          <th>Role</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(user, index) in paginatedUsersFiltered" :key="index">
-          <td>{{ user.username }}</td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.firstName }} {{ user.lastName }}</td>
-          <td>
-            <select v-model="user.selectedRole">
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-              <option value="web_admin">Admin Web</option>
-            </select>
-          </td>
-          <td>
-            <button class="changerole" @click="confirmRoleChange(user)">Change Role</button>
-            <button class="deleteuser" @click="confirmDeleteUser(user.id, user.userId)">Delete User</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
     <div class="pagination">
       <button @click="prevPage" :disabled="currentPage === 1">Prev</button>
       <span>Page {{ currentPage }} of {{ totalPages }}</span>
@@ -39,6 +10,47 @@
 
       </div>
     </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Name-Surname</th>
+          <th>Login History</th>
+          <th>Role</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(user, index) in paginatedUsersFiltered" :key="index">
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.firstName }} {{ user.lastName }}</td>
+          <td>
+            <ul>
+              <li v-for="(loginTime, loginIndex) in user.loginlog" :key="loginIndex">
+                {{ loginTime }}
+              </li>
+            </ul>
+          </td>
+          <td>
+            <select v-model="user.selectedRole">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+              <option value="web_admin">Admin Web</option>
+            </select>
+          </td>
+          <td>
+            <div class="action-button-group">
+              <button class="changerole" @click="confirmRoleChange(user)">Change Role</button>
+              <button class="deleteuser" @click="confirmDeleteUser(user.id, user.userId)">Delete User</button>
+            </div>
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
   </div>
 </template>
 
@@ -53,7 +65,7 @@ import config from '@/config_ip_port_server.js';
 export default {
   setup() {
     const users = ref([]);
-    const pageSize = ref(10);
+    const pageSize = ref(8);
     const currentPage = ref(1);
     const searchQuery = ref('');
     const ipv4 = ref(config.ipv4);
@@ -77,6 +89,7 @@ export default {
             firstName: doc.data().firstName,
             lastName: doc.data().lastName,
             selectedRole: doc.data().role,
+            loginlog: doc.data().loginlog || [],
           }));
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -187,7 +200,7 @@ export default {
 <style>
 .admin-panel {
   margin: 0 auto;
-  max-width: 800px;
+  max-width: 1300px;
   padding-top: 20px;
 }
 
@@ -223,7 +236,9 @@ th {
   border: 1px solid #ccc;
   border-radius: 5px;
 }
-
+.action-button-group{
+  text-align: center;
+}
 .changerole, .deleteuser {
   padding: 8px 16px;
   border: none;

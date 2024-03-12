@@ -35,7 +35,7 @@
 
 <script>
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs,updateDoc } from 'firebase/firestore';
 import { auth, firestore } from '@/firebase';
 
 export default {
@@ -57,6 +57,7 @@ export default {
         console.log('User UID:', userCredential.user.uid);
 
         localStorage.setItem('isAuthenticated', true);
+
         // Fetch user role from Firestore
         const usersCollection = collection(firestore, 'users');
         const userQuery = query(usersCollection, where('userId', '==', userCredential.user.uid));
@@ -64,8 +65,20 @@ export default {
 
         // Inside the login method after fetching user role from Firestore
         if (!querySnapshot.empty) {
-          const user = querySnapshot.docs[0].data();
-          const role = user.role;
+          const userDocRef = querySnapshot.docs[0].ref;
+          const userDocData = querySnapshot.docs[0].data();
+          const lastSignInTime = userCredential.user.metadata.lastSignInTime;
+
+          // Get the current login log array or create an empty array if it doesn't exist
+          const loginLogArray = userDocData.loginlog || [];
+
+          // Append the new login timestamp to the login log array
+          loginLogArray.push(lastSignInTime);
+
+          // Update the login log in Firestore
+          await updateDoc(userDocRef, { loginlog: loginLogArray });
+
+          const role = userDocData.role;
           console.log('User role:', role);
           
           // Dispatch login action with userRole

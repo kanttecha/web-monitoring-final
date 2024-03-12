@@ -7,6 +7,20 @@
       <router-link to="/about" class="add-job-button">ADD JOB</router-link>
     </div>
 
+        <!-- Pagination and Search -->
+    <div class="pagination-search-container">
+      <!-- Pagination Controls -->
+      <div class="pagination">
+        <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
+      </div>
+      <!-- Search Input -->
+      <div class="search-container">
+        <input v-model="searchQuery" type="text" @input="handleSearch" placeholder="Search...">
+      </div>
+    </div>
+
     <table>
       <!-- Table Header -->
       <thead>
@@ -51,19 +65,7 @@
         </tr>
       </tbody>
     </table>
-    <!-- Pagination and Search -->
-    <div class="pagination-search-container">
-      <!-- Pagination Controls -->
-      <div class="pagination">
-        <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
-        <span>Page {{ currentPage }} of {{ totalPages }}</span>
-        <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
-      </div>
-      <!-- Search Input -->
-      <div class="search-container">
-        <input v-model="searchQuery" type="text" @input="handleSearch" placeholder="Search...">
-      </div>
-    </div>
+
   </div>
 </template>
 
@@ -205,6 +207,8 @@ export default {
   padding-right: 50px; 
   padding-left: 50px;
   padding-top: 20px;
+  padding-bottom: 50px;
+  
 }
 
 table {

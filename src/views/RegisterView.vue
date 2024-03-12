@@ -57,34 +57,47 @@ export default {
     };
   },
   methods: {
-    async register() {
-      try {
-        // Register user with email and password
-        const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password);
-        const userId = userCredential.user.uid;
+async register() {
+  try {
+    // Register user with email and password
+    const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password);
+    const userId = userCredential.user.uid;
 
-        // Add user to Firestore with default user role
-        const usersCollection = collection(firestore, 'users');
-        await addDoc(usersCollection, { userId, firstName: this.firstName, lastName: this.lastName, username: this.username, telephone: this.telephone, email: this.email, role: 'user' });
+    // Get the user's last sign-in time
+    const lastSignInTime = userCredential.user.metadata.lastSignInTime;
 
-        console.log('User registered successfully with ID: ', userId);
+    // Add user to Firestore with default user role and login log
+    const usersCollection = collection(firestore, 'users');
+    await addDoc(usersCollection, {
+      userId,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      username: this.username,
+      telephone: this.telephone,
+      email: this.email,
+      role: 'user',
+      loginlog: [lastSignInTime] // Initialize login log with the current sign-in time
+    });
 
-        // Clear form fields after successful registration
-        this.firstName = '';
-        this.lastName = '';
-        this.username = '';
-        this.telephone = '';
-        this.email = '';
-        this.password = '';
+    console.log('User registered successfully with ID: ', userId);
 
-        // Redirect to homeuser page after successful registration
-        this.$router.push({ name: 'home' });
-      } catch (error) {
-        console.error('Error registering user: ', error.message);
-        // Set error message
-        this.errorMessage = error.message;
-      }
-    },
+    // Clear form fields after successful registration
+    this.firstName = '';
+    this.lastName = '';
+    this.username = '';
+    this.telephone = '';
+    this.email = '';
+    this.password = '';
+
+    // Redirect to homeuser page after successful registration
+    this.$router.push({ name: 'home' });
+  } catch (error) {
+    console.error('Error registering user: ', error.message);
+    // Set error message
+    this.errorMessage = error.message;
+  }
+},
+
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword;
       const passwordInput = this.$refs.passwordInput;
