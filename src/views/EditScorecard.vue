@@ -9,7 +9,7 @@
             <input v-model="editedItem.placeOfWork" type="text" id="placeOfWork" required>
           </div>
 
-                    <!-- Additional inputs for jobType, province, district, subDistrict, and postalCode -->
+          <!-- Additional inputs for jobType, province, district, subDistrict, and postalCode -->
           <div class="form-group">
             <label for="jobType">Job Type:</label>
             <input v-model="editedItem.jobType" type="text" id="jobType" required>
@@ -52,8 +52,11 @@
 
           <div class="form-group">
             <label for="responsiblePerson">Responsible Person:</label>
-            <input v-model="editedItem.responsiblePerson" type="text" required>
+            <select v-model="editedItem.responsiblePersonId" required>
+              <option v-for="user in users" :key="user.id" :value="user.id">{{ user.firstName }} {{ user.lastName }}</option>
+            </select>
           </div>
+
           <button class="updatebutton" type="submit">Update</button>
         </div>
 
@@ -69,18 +72,14 @@
           <div class="form-group">
             <button class="add-camera" type="button" @click="addCamera">Add Camera</button>
           </div>
-          
-
         </div>
       </div>
-
-      
     </form>
   </div>
 </template>
 
 <script>
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc ,collection,getDocs} from 'firebase/firestore';
 import { firestore } from '@/firebase';
 
 export default {
@@ -92,18 +91,20 @@ export default {
         longitude: '',
         serialNumber: '',
         rtspCameras: [{ value: '' }],
-        responsiblePerson: '',
+        responsiblePersonId: '', // Changed to responsiblePersonId
         jobType: '',
         province: '',
         district: '',
         subDistrict: '',
         postalCode: ''
       },
+      users: [], // Array to hold users data
     };
   },
   async mounted() {
     const itemId = this.$route.params.id;
     await this.fetchScorecardItem(itemId);
+    await this.fetchUsers(); // Fetch users data when component is mounted
   },
   methods: {
     async fetchScorecardItem(itemId) {
@@ -118,6 +119,13 @@ export default {
       } catch (error) {
         console.error('Error fetching document:', error);
       }
+    },
+    async fetchUsers() {
+      const usersCollection = collection(firestore, "users");
+      const querySnapshot = await getDocs(usersCollection);
+      querySnapshot.forEach(doc => {
+        this.users.push({ id: doc.id, ...doc.data() });
+      });
     },
     async updateScorecard() {
       const itemId = this.$route.params.id;
@@ -174,6 +182,7 @@ label {
   color: #333; /* Darken the label color */
 }
 
+select,
 input {
   width: 100%;
   padding: 10px; /* Increase padding for better appearance */
@@ -187,21 +196,14 @@ input:focus {
   border-color: #66afe9; /* Change border color on focus */
 }
 
-.remove-camera {
-  padding: 8px 16px; /* Adjust padding for smaller buttons */
-  background-color: #dc3545; /* Red for remove button */
-  color: #fff;
-  border: none;
-  border-radius: 5px; /* Add rounded corners */
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+select:focus {
+  outline: none; /* Remove the default focus outline */
+  border-color: #66afe9; /* Change border color on focus */
 }
 
-.remove-camera:hover {
-  background-color: #c82333; /* Darker red for remove button on hover */
-}
 
-.add-camera {
+.add-camera,
+button[type="submit"] {
   padding: 8px 16px; /* Adjust padding for smaller buttons */
   background-color: #1c782b; /* Green for add button */
   color: #fff;
@@ -211,25 +213,22 @@ input:focus {
   transition: background-color 0.3s ease;
 }
 
-.add-camera:hover {
+
+
+.remove-camera{
+  padding: 8px 16px; /* Adjust padding for smaller buttons */
+  background-color: #e03030; /* Green for add button */
+  color: #fff;
+  border: none;
+  border-radius: 5px; /* Add rounded corners */
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.remove-camera:hover,
+.add-camera:hover,
+button[type="submit"]:hover {
   background-color: #0056b3; /* Darker green for add button on hover */
 }
 
-button[type="submit"] {
-  margin-top: 16px; /* Add margin-top to separate from other buttons */
-}
-.updatebutton {
-  margin-top: 16px;
-  padding: 10px 20px; /* Add padding to the button */
-  background-color: #1c782b; /* Set background color */
-  color: #fff; /* Set text color */
-  border: none; /* Remove border */
-  border-radius: 5px; /* Add rounded corners */
-  cursor: pointer; /* Add cursor pointer on hover */
-  transition: background-color 0.3s ease; /* Smooth transition for background color */
-}
-
-.updatebutton:hover {
-  background-color: #0056b3; /* Change background color on hover */
-}
 </style>

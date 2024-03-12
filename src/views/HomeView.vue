@@ -7,9 +7,6 @@
       <router-link to="/about" class="add-job-button">ADD JOB</router-link>
     </div>
 
-
-
-
     <table>
       <!-- Table Header -->
       <thead>
@@ -40,7 +37,11 @@
               </li>
             </ul>
           </td>
-          <td>{{ item.responsiblePerson }}</td>
+          <td>
+            <div class="responsible-person">
+              <p v-html="getResponsiblePersonDetails(item.responsiblePersonId)"></p>
+            </div>
+          </td>
           <td>
             <div class="action-buttons">
               <button v-if="isAuthorizedToEdit" class="edit" @click="editScorecardItem(item.id)">Edit</button>
@@ -79,10 +80,10 @@ export default {
   data() {
     return {
       scorecardData: [],
+      usersData: [],
       currentPage: 1,
       itemsPerPage: 5,
-      searchQuery: "",
-      
+      searchQuery: "",      
     };
   },
   computed: {
@@ -104,7 +105,7 @@ export default {
           searchRegex.test(item.latitude) ||
           searchRegex.test(item.longitude) ||
           searchRegex.test(item.serialNumber) ||
-          searchRegex.test(item.responsiblePerson) ||
+          searchRegex.test(this.getResponsiblePersonDetails(item.responsiblePersonId)) ||
           (this.isAuthorizedToViewRtspCamera && item.rtspCameras.some(camera => searchRegex.test(camera.value)))
         );
       });
@@ -127,6 +128,7 @@ export default {
   },
   mounted() {
     this.fetchScorecardData();
+    this.fetchUsersData();
   },
   methods: {
     async fetchScorecardData() {
@@ -137,19 +139,25 @@ export default {
           id: doc.id,
           ...doc.data(),
         }));
-        this.checkTemperatureAlert();
       } catch (error) {
         console.error("Error fetching scorecard data:", error);
       }
     },
-
-
-
-
-
-    deleteScorecardItem(itemId) {
+    async fetchUsersData() {
+      const usersCollection = collection(firestore, "users");
+      try {
+        const querySnapshot = await getDocs(usersCollection);
+        this.usersData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+      } catch (error) {
+        console.error("Error fetching users data:", error);
+      }
+    },
+    async deleteScorecardItem(itemId) {
       if (confirm("Are you sure you want to delete this item?")) {
-        this.performDelete(itemId);
+        await this.performDelete(itemId);
       }
     },
     async performDelete(itemId) {
@@ -177,10 +185,20 @@ export default {
     },
     handleSearch() {
       this.currentPage = 1;
-    }
+    },
+    getResponsiblePersonDetails(responsiblePersonId) {
+      const user = this.usersData.find(user => user.id === responsiblePersonId);
+      if (user) {
+        return `<p>${user.firstName} ${user.lastName}</p><p>Email: ${user.email}</p><p>Phone: ${user.telephone}</p>`;
+      }
+      return '';
+    },
   },
 };
 </script>
+
+
+
 
 <style>
 .table-container {
@@ -292,7 +310,9 @@ button.delete {
 .add-job-button:hover {
   background-color: #28df62; /* Darker blue on hover */
 }
-
+.responsible-person p {
+  margin: 0;
+}
 
 </style>
 

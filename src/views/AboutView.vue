@@ -1,6 +1,5 @@
 <template>
   <div class="form-container">
-   
     <div class="form-columns">
       <!-- First Column -->
       <div class="form-column">
@@ -53,9 +52,12 @@
             <input v-model="newScorecard.serialNumber" type="text" required>
           </div>
 
+          <!-- Responsible Person dropdown -->
           <div class="form-group">
             <label for="responsiblePerson">Responsible Person:</label>
-            <input v-model="newScorecard.responsiblePerson" type="text" required>
+            <select v-model="newScorecard.responsiblePersonId" required>
+              <option v-for="user in users" :key="user.id" :value="user.id">{{ user.firstName }} {{ user.lastName }}</option>
+            </select>
           </div>
 
           <!-- Additional form input for job type -->
@@ -92,12 +94,13 @@ import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { firestore } from "@/firebase";
 import data from "./th-address.json";
 import config from '@/config_ip_port_server.js';
+
 export default {
   data() {
     return {
       ipv4: config.ipv4,
       port_web: config.port_web,
-      
+      users: [], // Array to hold users data
       newScorecard: {
         placeOfWork: "",
         latitude: "",
@@ -105,7 +108,7 @@ export default {
         postalCode: "",
         serialNumber: "",
         rtspCameras: [{ value: '' }],
-        responsiblePerson: "",
+        responsiblePersonId: "", // New property to hold responsible person's ID
         jobType: ""
       },
       generatedURL: ""
@@ -125,7 +128,18 @@ export default {
       return this.filteredData ? this.filteredData.subDistrictList.map(subDistrict => subDistrict.subDistrictName) : [];
     }
   },
+  async created() {
+    // Fetch users data from Firestore collection
+    await this.fetchUsers();
+  },
   methods: {
+    async fetchUsers() {
+      const usersCollection = collection(firestore, "users");
+      const querySnapshot = await getDocs(usersCollection);
+      querySnapshot.forEach(doc => {
+        this.users.push({ id: doc.id, ...doc.data() });
+      });
+    },
     async addScorecard() {
       const scorecardCollection = collection(firestore, "your_collection");
 
@@ -151,7 +165,7 @@ export default {
           postalCode: "",
           serialNumber: "",
           rtspCamera: [],
-          responsiblePerson: "",
+          responsiblePersonId: "", // Reset responsiblePersonId
           jobType: ""
         };
 
@@ -171,6 +185,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 /* Adjusted styling for the form */
