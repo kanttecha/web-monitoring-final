@@ -250,8 +250,8 @@ export default {
           src: `http://${this.ipv4}:${this.port}/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
-        player.load(); // Load the new source
-        player.play(); // Start playing the video automatically after loading the new source
+  
+        
       });
     },
   },

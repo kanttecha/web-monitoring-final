@@ -91,7 +91,7 @@
 </template>
 
 <script>
-import { collection, addDoc, query, where, getDocs, } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs, setDoc} from "firebase/firestore";
 import { firestore, auth } from "@/firebase";
 import data from "./th-address.json";
 import config from '@/config_ip_port_server.js';
@@ -181,28 +181,38 @@ export default {
       this.generatedURL = `http://${this.ipv4}:${this.port_web}/hls/${this.newScorecard.serialNumber}`;
       this.newScorecard.url = this.generatedURL;
 
-      try {
+    try {
         // Add scorecard to Firestore
-        await addDoc(scorecardCollection, this.newScorecard);
+        const docRef = await addDoc(scorecardCollection, this.newScorecard);
+
+        // Get the ID of the newly created document
+        const newDocId = docRef.id;
+
+        // Update the newScorecard object with the document ID
+        this.newScorecard.id = newDocId;
+
+        // Update the document in Firestore with the added ID field using set method
+        await setDoc(docRef, { id: newDocId }, { merge: true });
+
         console.log("Scorecard information added successfully.");
 
         // Reset newScorecard fields after successful addition
         this.newScorecard = {
-          placeOfWork: "",
-          latitude: "",
-          longitude: "",
-          postalCode: "",
-          serialNumber: "",
-          rtspCamera: [],
-          responsiblePersonId: "", // Reset responsiblePersonId
-          jobType: ""
+            placeOfWork: "",
+            latitude: "",
+            longitude: "",
+            postalCode: "",
+            serialNumber: "",
+            rtspCamera: [],
+            responsiblePersonId: "", // Reset responsiblePersonId
+            jobType: ""
         };
 
         this.$router.push({ name: 'home' });
-      } catch (error) {
+    } catch (error) {
         console.error("Error adding scorecard information:", error);
-      }
-    },
+    }
+},
 
 
     addCamera() {

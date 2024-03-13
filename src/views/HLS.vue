@@ -61,7 +61,7 @@
 <script>
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs,getDoc,doc } from "firebase/firestore";
 import { firestore } from "@/firebase";
 import axios from 'axios';
 import config from '@/config_ip_port_server.js';
@@ -287,8 +287,8 @@ export default {
           src: `http://${this.ipv4}:${this.port}/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
-        player.load(); // Load the new source
-        player.play(); // Start playing the video automatically after loading the new source
+
+        
       });
     },
     async loadVariableInfo() {
@@ -296,8 +296,8 @@ export default {
         const scorecardCollection = collection(firestore, "your_collection");
         const querySnapshot = await getDocs(scorecardCollection);
 
-        querySnapshot.forEach((doc) => {
-          const scorecardData = doc.data();
+        querySnapshot.forEach(async (document) => {
+          const scorecardData = document.data();
           // Check if the serial number matches
           if (scorecardData.serialNumber === this.serialNumber) {
             // Assign variable information
@@ -305,8 +305,19 @@ export default {
             this.province = scorecardData.province;
             this.district = scorecardData.district;
             this.subDistrict = scorecardData.subDistrict;
-            this.responsiblePerson = scorecardData.responsiblePerson;
             this.jobType = scorecardData.jobType;
+
+            // Fetch user document using responsiblePersonId
+            const userDocRef = doc(firestore, "users", scorecardData.responsiblePersonId);
+            const userDocSnapshot = await getDoc(userDocRef);
+
+            if (userDocSnapshot.exists()) {
+              const userData = userDocSnapshot.data();
+              // Assign responsiblePerson with firstName and lastName
+              this.responsiblePerson = `${userData.firstName} ${userData.lastName}`;
+            } else {
+              console.error("User document does not exist for the given responsiblePersonId:", scorecardData.responsiblePersonId);
+            }
           }
         });
       } catch (error) {
