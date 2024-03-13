@@ -8,6 +8,11 @@
             <label for="placeOfWork">Job Name:</label>
             <input v-model="newScorecard.placeOfWork" type="text" required>
           </div>
+          <!-- Additional form input for job type -->
+          <div class="form-group">
+            <label for="jobType">Job Type:</label>
+            <input v-model="newScorecard.jobType" type="text" required>
+          </div>
 
           <!-- Other form inputs -->
 
@@ -60,11 +65,7 @@
             </select>
           </div>
 
-          <!-- Additional form input for job type -->
-          <div class="form-group">
-            <label for="jobType">Job Type:</label>
-            <input v-model="newScorecard.jobType" type="text" required>
-          </div>
+
 
           <button class="addinfo" type="submit">Add Information</button>
         </form>
@@ -79,7 +80,7 @@
             <button class="remove-camera" type="button" @click="removeCamera(index)">Remove</button>
           </div>
 
-          <!-- Display the generated URL -->
+
           <div class="form-group">
             <button class="add-camera" type="button" @click="addCamera">Add Camera</button>
           </div>
@@ -90,8 +91,8 @@
 </template>
 
 <script>
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
-import { firestore } from "@/firebase";
+import { collection, addDoc, query, where, getDocs, } from "firebase/firestore";
+import { firestore, auth } from "@/firebase";
 import data from "./th-address.json";
 import config from '@/config_ip_port_server.js';
 
@@ -145,19 +146,47 @@ export default {
 
       const serialNumberQuery = query(scorecardCollection, where("serialNumber", "==", this.newScorecard.serialNumber));
       const existingScorecards = await getDocs(serialNumberQuery);
-      
+
+      const currentUser = auth.currentUser;
+      const uid = currentUser.uid;
+
       if (!existingScorecards.empty) {
         console.error("Serial number already exists. Please enter a unique serial number.");
         return;
       }
 
+      // Retrieve user document based on UID
+      const userDoc = this.users.find(user => user.userId === uid);
+      if (!userDoc) {
+        console.error("User document not found for UID:", uid);
+        return;
+      }
+
+      // Extract firstName and lastName from user document
+      const { firstName, lastName } = userDoc;
+
+      // Construct job log entry with createdBy
+      const currentDate = new Date();
+      const formattedTimestamp = currentDate.toUTCString();
+      const jobLogEntry = {
+        action: 'created',
+        timestamp: formattedTimestamp,
+        createdBy: `${firstName} ${lastName}`
+      };
+
+
+      // Add job log entry to the new scorecard
+      this.newScorecard.jobLog = [jobLogEntry];
+
       this.generatedURL = `http://${this.ipv4}:${this.port_web}/hls/${this.newScorecard.serialNumber}`;
       this.newScorecard.url = this.generatedURL;
 
       try {
+        // Add scorecard to Firestore
         await addDoc(scorecardCollection, this.newScorecard);
         console.log("Scorecard information added successfully.");
 
+        // Reset newScorecard fields after successful addition
         this.newScorecard = {
           placeOfWork: "",
           latitude: "",
@@ -175,6 +204,7 @@ export default {
       }
     },
 
+
     addCamera() {
       this.newScorecard.rtspCameras.push({ value: '' });
     },
@@ -185,6 +215,7 @@ export default {
   },
 };
 </script>
+
 
 
 <style scoped>

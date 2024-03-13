@@ -28,7 +28,7 @@
           <td>{{ user.firstName }} {{ user.lastName }}</td>
           <td>
             <ul>
-              <li v-for="(loginTime, loginIndex) in user.loginlog" :key="loginIndex">
+              <li v-for="(loginTime, loginIndex) in user.loginlog.slice(-5).reverse()" :key="loginIndex">
                 {{ loginTime }}
               </li>
             </ul>
@@ -202,6 +202,7 @@ export default {
   margin: 0 auto;
   max-width: 1300px;
   padding-top: 20px;
+  padding-bottom: 50px;
 }
 
 table {

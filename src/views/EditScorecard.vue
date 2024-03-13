@@ -80,7 +80,7 @@
 
 <script>
 import { doc, getDoc, updateDoc ,collection,getDocs} from 'firebase/firestore';
-import { firestore } from '@/firebase';
+import { firestore,auth } from '@/firebase';
 
 export default {
   data() {
@@ -127,22 +127,60 @@ export default {
         this.users.push({ id: doc.id, ...doc.data() });
       });
     },
-    async updateScorecard() {
-      const itemId = this.$route.params.id;
-      const scorecardDocRef = doc(firestore, 'your_collection', itemId);
+async updateScorecard() {
+  const itemId = this.$route.params.id;
+  const scorecardDocRef = doc(firestore, 'your_collection', itemId);
 
-      try {
-        // Update the document with the edited data
-        await updateDoc(scorecardDocRef, this.editedItem);
-        console.log('Document successfully updated!');
+  try {
+    // Fetch the current document data
+    const docSnapshot = await getDoc(scorecardDocRef);
+    if (!docSnapshot.exists()) {
+      console.error('Document does not exist!');
+      return;
+    }
 
-        // Redirect back to the home page or another appropriate page
-        this.$router.push({ name: 'home' });
-      } catch (error) {
-        console.error('Error updating document:', error);
-        // Handle error or display a message to the user
+    const scorecardData = docSnapshot.data();
+
+    // Construct log entry
+    const currentUser = auth.currentUser;
+    const uid = currentUser.uid;
+    const userDoc = this.users.find(user => user.userId === uid);
+    if (!userDoc) {
+      console.error("User document not found for UID:", uid);
+      return;
+    }
+    const { firstName, lastName } = userDoc;
+    const formattedTimestamp = new Date().toUTCString();
+    const logEntry = {
+      action: 'edit',
+      timestamp: formattedTimestamp,
+      editedBy: `${firstName} ${lastName}`,
+      originalValue: {}, // Initialize empty object to store original values
+      changedValue: {} // Initialize empty object to store changed values
+    };
+
+    // Compare original and changed values to determine modifications
+    for (const key in this.editedItem) {
+      if (JSON.stringify(scorecardData[key]) !== JSON.stringify(this.editedItem[key])) {
+        logEntry.originalValue[key] = scorecardData[key];
+        logEntry.changedValue[key] = this.editedItem[key];
       }
-    },
+    }
+
+    // Update the document with the new log entry
+    const updatedJobLog = [...scorecardData.jobLog, logEntry];
+    
+    // Update the document with the edited data and the updated jobLog
+    await updateDoc(scorecardDocRef, { ...this.editedItem, jobLog: updatedJobLog });
+    console.log('Document successfully updated with new log entry!');
+
+    // Redirect back to the home page or another appropriate page
+    this.$router.push({ name: 'home' });
+  } catch (error) {
+    console.error('Error updating document:', error);
+    // Handle error or display a message to the user
+  }
+},
     addCamera() {
       this.editedItem.rtspCameras.push({ value: '' }); // Add an empty string for a new camera value
     },
