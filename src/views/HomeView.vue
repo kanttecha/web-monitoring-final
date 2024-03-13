@@ -59,6 +59,7 @@
           <td>
             <div class="action-buttons">
               <button v-if="isAuthorizedToEdit" class="edit" @click="editScorecardItem(item.id)">Edit</button>
+              <button class="export-log" @click="exportLog(item.jobLog)">Export Log</button>
               <button v-if="isAuthorizedToDelete" class="delete" @click="deleteScorecardItem(item.id)">Delete</button>
             </div>
           </td>
@@ -195,9 +196,22 @@ export default {
       }
       return '';
     },
+    exportLog(jobLog) {
+      const jsonData = JSON.stringify(jobLog, null, 2);
+      const blob = new Blob([jsonData], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "job_log.json";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
   },
 };
 </script>
+
 
 
 
@@ -288,7 +302,9 @@ button.delete {
   color: #fff;
   border-radius: 5px;
 }
-
+.export-log{
+  border-radius: 5px;
+}
 .google-map-container {
   display: flex;
   align-items: flex-start; /* Align items at the top of the container */

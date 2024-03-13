@@ -155,15 +155,20 @@ async updateScorecard() {
       action: 'edit',
       timestamp: formattedTimestamp,
       editedBy: `${firstName} ${lastName}`,
-      originalValue: {}, // Initialize empty object to store original values
-      changedValue: {} // Initialize empty object to store changed values
+      changes: [], // Initialize array to store changes
     };
 
-    // Compare original and changed values to determine modifications
+    // Compare editedItem with scorecardData to identify changes
     for (const key in this.editedItem) {
-      if (JSON.stringify(scorecardData[key]) !== JSON.stringify(this.editedItem[key])) {
-        logEntry.originalValue[key] = scorecardData[key];
-        logEntry.changedValue[key] = this.editedItem[key];
+      if (Object.prototype.hasOwnProperty.call(this.editedItem, key) && key !== 'id' && key !== 'jobLog') {
+        if (this.editedItem[key] !== scorecardData[key]) {
+          // Log the change
+          logEntry.changes.push({
+            field: key,
+            oldValue: scorecardData[key],
+            newValue: this.editedItem[key]
+          });
+        }
       }
     }
 
@@ -181,6 +186,8 @@ async updateScorecard() {
     // Handle error or display a message to the user
   }
 },
+
+
     addCamera() {
       this.editedItem.rtspCameras.push({ value: '' }); // Add an empty string for a new camera value
     },
