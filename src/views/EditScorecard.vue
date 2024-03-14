@@ -108,7 +108,7 @@ export default {
   },
   methods: {
     async fetchScorecardItem(itemId) {
-      const scorecardDocRef = doc(firestore, 'your_collection', itemId);
+      const scorecardDocRef = doc(firestore, 'job_collection', itemId);
       try {
         const docSnapshot = await getDoc(scorecardDocRef);
         if (docSnapshot.exists()) {
@@ -129,7 +129,7 @@ export default {
     },
 async updateScorecard() {
   const itemId = this.$route.params.id;
-  const scorecardDocRef = doc(firestore, 'your_collection', itemId);
+  const scorecardDocRef = doc(firestore, 'job_collection', itemId);
 
   try {
     // Fetch the current document data

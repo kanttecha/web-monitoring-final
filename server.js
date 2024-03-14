@@ -47,10 +47,10 @@ app.post('/generateBatFiles', async (req, res) => {
         let mainRtspCameraValue = rtspCamera.value.slice(0, -1);
 
         // Main stream configuration
-        mainFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${mainRtspCameraValue}0" -vf scale=2560:1440 -vcodec libx264 -r 25 -b:v 2000000 -crf 23 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}_main.m3u8"`;
+        mainFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${mainRtspCameraValue}0" -vf scale=2560:1440 -vcodec libx264 -r 25 -b:v 2000000 -crf 23 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 2 -hls_flags delete_segments "${outputFile}_main.m3u8"`;
 
         // Sub stream configuration
-        subFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${mainRtspCameraValue}1" -vf scale=704:576 -vcodec libx264 -r 25 -b:v 500000 -crf 25 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 5 -hls_flags delete_segments "${outputFile}_sub.m3u8"`;
+        subFfmpegCommand = `ffmpeg -v verbose -rtsp_transport tcp -i "${mainRtspCameraValue}1" -vf scale=704:576 -vcodec libx264 -r 25 -b:v 500000 -crf 25 -acodec aac -sc_threshold 0 -f hls -hls_time 5 -segment_time 5 -hls_list_size 2 -hls_flags delete_segments "${outputFile}_sub.m3u8"`;
 
         // Write the main stream command to a .bat file
         const mainBatFilePath = path.join(__dirname, 'hls', outputFile + '_main.bat');
@@ -84,7 +84,7 @@ app.post('/generateBatFiles', async (req, res) => {
 app.delete('/deleteFiles', async (req, res) => {
   try {
     // Kill the ffmpeg.exe process
-    exec('taskkill /F /IM ffmpeg.exe', (error, stdout) => {
+    exec('taskkill /IM ffmpeg.exe /F', (error, stdout) => {
       // Delete .bat, .ts, and .m3u8 files
       fs.readdirSync(path.join(__dirname, 'hls')).forEach(file => {
         if (file.endsWith('.bat') || file.endsWith('.ts') || file.endsWith('.m3u8')) {

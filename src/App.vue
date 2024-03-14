@@ -83,7 +83,7 @@ export default {
     };
 
     const fetchTemperatureAlerts = () => {
-      const querySnapshot = collection(firestore, 'your_collection');
+      const querySnapshot = collection(firestore, 'job_collection');
       const unsubscribe = onSnapshot(querySnapshot, (snapshot) => {
         alerts.value = []; // Clear previous alerts
         snapshot.forEach((doc) => {

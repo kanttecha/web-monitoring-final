@@ -135,7 +135,7 @@ export default {
   },
   methods: {
     async fetchScorecardData() {
-      const scorecardCollection = collection(firestore, "your_collection");
+      const scorecardCollection = collection(firestore, "job_collection");
       try {
         const querySnapshot = await getDocs(scorecardCollection);
         this.scorecardData = querySnapshot.docs.map((doc) => ({
@@ -165,7 +165,7 @@ export default {
     },
     async performDelete(itemId) {
       try {
-        const scorecardDocRef = doc(firestore, "your_collection", itemId);
+        const scorecardDocRef = doc(firestore, "job_collection", itemId);
         await deleteDoc(scorecardDocRef);
         this.scorecardData = this.scorecardData.filter((item) => item.id !== itemId);
         console.log("Document successfully deleted!");

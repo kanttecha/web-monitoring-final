@@ -2,9 +2,10 @@
   <div style="padding-top:20px">
     <!-- Buttons for generating .bat files, running all .bat files, and deleting files -->
     <div class="button-container">
+      <button @click="genfileforstream" class="button" :disabled="streamButtonDisabled">Stream</button>
       <button @click="performMainStreamOperation" class="button">Main Stream</button>
       <button @click="performSubStreamOperation" class="button">Sub Stream</button>
-      <button @click="deleteFiles" class="button" style="background-color: #dc3545; color: white;">Delete Files</button>
+      <button @click="deleteFiles" class="button" style="background-color: #dc3545; color: white;">Reset Stream</button>
     </div>
 
     <!-- Loop through the videos and render each one -->
@@ -51,13 +52,24 @@ export default {
       currentStream: 'sub', // Initially set to sub stream
       ipv4: config.ipv4,
       port: config.port,
+      streamButtonDisabled: false, // Initially stream button is enabled
     };
   },
   async mounted() {
+    // Retrieve streamButtonDisabled state from localStorage
+    const storedState = localStorage.getItem('streamButtonDisabled');
+    if (storedState !== null) {
+      this.streamButtonDisabled = JSON.parse(storedState);
+    }
+
     await this.loadVideos();
     this.initPlayers();
   },
   watch: {
+    // Watch for changes in streamButtonDisabled and store in localStorage
+    streamButtonDisabled(newValue) {
+      localStorage.setItem('streamButtonDisabled', JSON.stringify(newValue));
+    },
     currentStream() {
       this.updateVideoSource();
     }
@@ -65,7 +77,7 @@ export default {
   methods: {
     async loadVideos() {
       try {
-        const scorecardCollection = collection(firestore, "your_collection");
+        const scorecardCollection = collection(firestore, "job_collection");
         const querySnapshot = await getDocs(scorecardCollection);
 
         querySnapshot.forEach((doc) => {
@@ -163,7 +175,7 @@ export default {
       try {
         console.log("Generating .bat files...");
 
-        const scorecardCollection = collection(firestore, "your_collection");
+        const scorecardCollection = collection(firestore, "job_collection");
         const querySnapshot = await getDocs(scorecardCollection);
 
         const data = [];
@@ -215,9 +227,12 @@ export default {
         console.log("Deleting files...");
         await axios.delete(`http://${this.ipv4}:${this.port}/deleteFiles`);
         console.log("Files deleted successfully.");
+        this.streamButtonDisabled = false; // Enable stream button after files are deleted
       } catch (error) {
         alert("Error deleting files: " + error.message);
         console.error("Error deleting files:", error);
+      }finally {
+        this.streamButtonDisabled = false;
       }
     },
     async runAllBatFiles() {
@@ -233,14 +248,12 @@ export default {
     },
     async performSubStreamOperation() {
       this.currentStream = 'sub'; // Update the current stream to sub
-      await this.generateBatFiles();
-      await this.runAllBatFiles();
+
       this.updateVideoSource();
     },
     async performMainStreamOperation() {
       this.currentStream = 'main'; // Update the current stream to main
-      await this.generateBatFiles();
-      await this.runAllBatFiles();
+
       this.updateVideoSource();
     },
     updateVideoSource() {
@@ -254,9 +267,17 @@ export default {
         
       });
     },
+    async genfileforstream(){
+      this.streamButtonDisabled = true; // Disable stream button
+      await this.generateBatFiles();
+      await this.runAllBatFiles();
+
+    }
   },
 };
 </script>
+
+
 
 <style scoped>
 .video-wrapper {

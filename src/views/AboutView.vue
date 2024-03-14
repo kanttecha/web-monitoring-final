@@ -142,7 +142,7 @@ export default {
       });
     },
     async addScorecard() {
-      const scorecardCollection = collection(firestore, "your_collection");
+      const scorecardCollection = collection(firestore, "job_collection");
 
       const serialNumberQuery = query(scorecardCollection, where("serialNumber", "==", this.newScorecard.serialNumber));
       const existingScorecards = await getDocs(serialNumberQuery);

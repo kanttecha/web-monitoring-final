@@ -1,14 +1,14 @@
 <template>
   <div style="padding-top:20px">
-    <!-- Buttons for generating .bat files, running all .bat files, and deleting files -->
+    <!-- Buttons for selecting stream -->
     <div class="button-container">
+      <button @click="genfileforstream" class="button" :disabled="streamButtonDisabled">Stream</button>
       <button class="button" @click="performMainStreamOperation">Main Stream</button>
       <button class="button" @click="performSubStreamOperation">Sub Stream</button>
-      
-      <button @click="deleteFiles" class="button" style="background-color: #dc3545; color: white;">Delete Files</button>
+      <button @click="deleteFiles" class="button" style="background-color: #dc3545; color: white;">Reset Stream</button>
     </div>
 
-    <!-- Loop through the videos and render each one -->
+    <!-- Loop through the filtered videos and render each one -->
     <div class="video-container">
       <div v-for="(video, index) in filteredVideos" :key="index" class="video-wrapper">
         <div>
@@ -32,6 +32,8 @@
         </div>
       </div>
     </div>
+    
+    <!-- Display variable information -->
     <div class="variable-info">
       <label class="info-label" for="placeOfWork">Job Name:</label>
       <p v-if="placeOfWork" class="info-value">{{ placeOfWork }}</p>
@@ -54,17 +56,17 @@
       <label class="info-label" for="responsiblePerson">Responsible Person Data:</label>
       <p v-if="responsiblePerson" class="info-value">{{ responsiblePerson }}</p>
     </div>
-    
   </div>
 </template>
 
 <script>
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import { collection, getDocs,getDoc,doc } from "firebase/firestore";
+import { collection, getDocs, doc ,getDoc} from "firebase/firestore";
 import { firestore } from "@/firebase";
 import axios from 'axios';
 import config from '@/config_ip_port_server.js';
+
 export default {
   data() {
     return {
@@ -82,9 +84,15 @@ export default {
       currentStream: 'sub',
       ipv4: config.ipv4,
       port: config.port,
+      streamButtonDisabled: false,
     };
   },
   async mounted() {
+    // Retrieve streamButtonDisabled state from localStorage
+    const storedState = localStorage.getItem('streamButtonDisabled');
+    if (storedState !== null) {
+      this.streamButtonDisabled = JSON.parse(storedState);
+    }
     // Extract serial number from the route params
     this.serialNumber = this.$route.params.serialNumber;
     // Load variable information associated with the serial number
@@ -95,6 +103,10 @@ export default {
     this.initPlayers();
   },
   watch: {
+    // Watch for changes in streamButtonDisabled and store in localStorage
+    streamButtonDisabled(newValue) {
+      localStorage.setItem('streamButtonDisabled', JSON.stringify(newValue));
+    },
     currentStream() {
       this.updateVideoSource();
     }
@@ -108,20 +120,24 @@ export default {
   methods: {
     async loadVideos() {
       try {
-        const scorecardCollection = collection(firestore, "your_collection");
+        const scorecardCollection = collection(firestore, "job_collection");
         const querySnapshot = await getDocs(scorecardCollection);
 
         querySnapshot.forEach((doc) => {
           const scorecardData = doc.data();
           const { serialNumber, rtspCameras } = scorecardData;
 
-          rtspCameras.forEach((rtspCamera, cameraIndex) => {
-            const outputFile = `${serialNumber}_${cameraIndex + 1}`;
-            this.videos.push(outputFile);
-            this.recording.push(false);
-            this.mediaRecorders.push(null);
-            this.recordedChunks.push([]);
-          });
+          // Check if the current document's serial number matches the desired serial number
+          if (serialNumber === this.serialNumber) {
+            // Only add videos associated with the desired serial number
+            rtspCameras.forEach((rtspCamera, cameraIndex) => {
+              const outputFile = `${serialNumber}_${cameraIndex + 1}`;
+              this.videos.push(outputFile);
+              this.recording.push(false);
+              this.mediaRecorders.push(null);
+              this.recordedChunks.push([]);
+            });
+          }
         });
       } catch (error) {
         alert("Error loading videos: " + error.message);
@@ -203,7 +219,7 @@ export default {
       try {
         console.log("Generating .bat files...");
 
-        const scorecardCollection = collection(firestore, "your_collection");
+        const scorecardCollection = collection(firestore, "job_collection");
         const querySnapshot = await getDocs(scorecardCollection);
 
         const data = [];
@@ -252,9 +268,12 @@ export default {
         console.log("Deleting files...");
         await axios.delete(`http://${this.ipv4}:${this.port}/deleteFiles`);
         console.log("Files deleted successfully.");
+        this.streamButtonDisabled = false; // Enable stream button after files are deleted
       } catch (error) {
         alert("Error deleting files: " + error.message);
         console.error("Error deleting files:", error);
+      }finally {
+        this.streamButtonDisabled = false;
       }
     },
     async runAllBatFiles() {
@@ -270,14 +289,12 @@ export default {
     },
     async performSubStreamOperation() {
       this.currentStream = 'sub'; // Update the current stream to sub
-      await this.generateBatFiles();
-      await this.runAllBatFiles();
+
       this.updateVideoSource();
     },
     async performMainStreamOperation() {
       this.currentStream = 'main'; // Update the current stream to main
-      await this.generateBatFiles();
-      await this.runAllBatFiles();
+
       this.updateVideoSource();
     },
     updateVideoSource() {
@@ -287,13 +304,17 @@ export default {
           src: `http://${this.ipv4}:${this.port}/hls/${videoId}_${this.currentStream}.m3u8`,
           type: 'application/x-mpegURL'
         });
-
-        
       });
+    },
+    async genfileforstream(){
+      this.streamButtonDisabled = true; // Disable stream button
+      await this.generateBatFiles();
+      await this.runAllBatFiles();
+
     },
     async loadVariableInfo() {
       try {
-        const scorecardCollection = collection(firestore, "your_collection");
+        const scorecardCollection = collection(firestore, "job_collection");
         const querySnapshot = await getDocs(scorecardCollection);
 
         querySnapshot.forEach(async (document) => {

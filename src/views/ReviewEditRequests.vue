@@ -50,7 +50,7 @@ async fetchOriginalItem(itemId) {
   console.log('Item ID:', itemId); // Check if itemId is defined
   console.log('Firestore:', firestore); // Check if firestore is defined
 
-  const scorecardDocRef = doc(firestore, 'your_collection', itemId);
+  const scorecardDocRef = doc(firestore, 'job_collection', itemId);
   console.log('Doc Ref:', scorecardDocRef); // Check the document reference
 
   try {
