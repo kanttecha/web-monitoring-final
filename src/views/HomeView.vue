@@ -59,7 +59,7 @@
           <td>
             <div class="action-buttons">
               <button v-if="isAuthorizedToEdit" class="edit" @click="editScorecardItem(item.id)">Edit</button>
-              <button class="export-log" @click="exportLog(item.jobLog)">Export Log</button>
+              <button v-if="isAuthorizedToExportLog" class="export-log" @click="exportLog(item.jobLog)">Export Log</button>
               <button v-if="isAuthorizedToDelete" class="delete" @click="deleteScorecardItem(item.id)">Delete</button>
             </div>
           </td>
@@ -128,6 +128,11 @@ export default {
       const userRole = store.getters.userRole;
       return userRole === 'admin' || userRole === 'web_admin';
     },
+    isAuthorizedToExportLog() {
+      const userRole = store.getters.userRole;
+      return userRole === 'admin' || userRole === 'web_admin';
+    },
+
   },
   mounted() {
     this.fetchScorecardData();
